@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Threading.Tasks;
 using Microsoft.AspNet.Builder;
+using Microsoft.AspNet.Hosting;
 using Microsoft.AspNet.Http.Features;
 using Microsoft.AspNet.Localization;
 using Microsoft.AspNet.TestHost;
@@ -18,31 +19,36 @@ namespace Microsoft.Extensions.Localization.Tests
         [Fact]
         public async void GetCultureInfoFromPersistentCookie()
         {
-            using (var server = TestServer.Create(app =>
-            {
-                var options = new RequestLocalizationOptions()
+            var builder = new WebApplicationBuilder()
+                .Configure(app =>
                 {
-                    SupportedCultures = new List<CultureInfo>
+                    var options = new RequestLocalizationOptions
                     {
-                        new CultureInfo("ar-SA")
-                    },
-                    SupportedUICultures = new List<CultureInfo>
+                        DefaultRequestCulture = new RequestCulture("en-US"),
+                        SupportedCultures = new List<CultureInfo>
+                        {
+                            new CultureInfo("ar-SA")
+                        },
+                        SupportedUICultures = new List<CultureInfo>
+                        {
+                            new CultureInfo("ar-SA")
+                        }
+                    };
+                    var provider = new CookieRequestCultureProvider();
+                    provider.CookieName = "Preferences";
+                    options.RequestCultureProviders.Insert(0, provider);
+
+                    app.UseRequestLocalization(options);
+                    app.Run(context =>
                     {
-                        new CultureInfo("ar-SA")
-                    }
-                };
-                var provider = new CookieRequestCultureProvider();
-                provider.CookieName = "Preferences";
-                options.RequestCultureProviders.Insert(0, provider);
-                app.UseRequestLocalization(options, defaultRequestCulture: new RequestCulture("en-US"));
-                app.Run(context =>
-                {
-                    var requestCultureFeature = context.Features.Get<IRequestCultureFeature>();
-                    var requestCulture = requestCultureFeature.RequestCulture;
-                    Assert.Equal("ar-SA", requestCulture.Culture.Name);
-                    return Task.FromResult(0);
+                        var requestCultureFeature = context.Features.Get<IRequestCultureFeature>();
+                        var requestCulture = requestCultureFeature.RequestCulture;
+                        Assert.Equal("ar-SA", requestCulture.Culture.Name);
+                        return Task.FromResult(0);
+                    });
                 });
-            }))
+
+            using (var server = new TestServer(builder))
             {
                 var client = server.CreateClient();
                 var culture = new CultureInfo("ar-SA");
@@ -57,31 +63,35 @@ namespace Microsoft.Extensions.Localization.Tests
         [Fact]
         public async void GetDefaultCultureInfoIfCultureKeysAreMissingOrInvalid()
         {
-            using (var server = TestServer.Create(app =>
-            {
-                var options = new RequestLocalizationOptions()
+            var builder = new WebApplicationBuilder()
+                .Configure(app =>
                 {
-                    SupportedCultures = new List<CultureInfo>
+                    var options = new RequestLocalizationOptions
                     {
-                        new CultureInfo("ar-SA")
-                    },
-                    SupportedUICultures = new List<CultureInfo>
+                        DefaultRequestCulture = new RequestCulture("en-US"),
+                        SupportedCultures = new List<CultureInfo>
+                        {
+                            new CultureInfo("ar-SA")
+                        },
+                        SupportedUICultures = new List<CultureInfo>
+                        {
+                            new CultureInfo("ar-SA")
+                        }
+                    };
+                    var provider = new CookieRequestCultureProvider();
+                    provider.CookieName = "Preferences";
+                    options.RequestCultureProviders.Insert(0, provider);
+                    app.UseRequestLocalization(options);
+                    app.Run(context =>
                     {
-                        new CultureInfo("ar-SA")
-                    }
-                };
-                var provider = new CookieRequestCultureProvider();
-                provider.CookieName = "Preferences";
-                options.RequestCultureProviders.Insert(0, provider);
-                app.UseRequestLocalization(options, defaultRequestCulture: new RequestCulture("en-US"));
-                app.Run(context =>
-                {
-                    var requestCultureFeature = context.Features.Get<IRequestCultureFeature>();
-                    var requestCulture = requestCultureFeature.RequestCulture;
-                    Assert.Equal("en-US", requestCulture.Culture.Name);
-                    return Task.FromResult(0);
+                        var requestCultureFeature = context.Features.Get<IRequestCultureFeature>();
+                        var requestCulture = requestCultureFeature.RequestCulture;
+                        Assert.Equal("en-US", requestCulture.Culture.Name);
+                        return Task.FromResult(0);
+                    });
                 });
-            }))
+
+            using (var server = new TestServer(builder))
             {
                 var client = server.CreateClient();
                 client.DefaultRequestHeaders.Add("Cookie", new CookieHeaderValue("Preferences", "uic=ar-SA").ToString());
@@ -92,31 +102,35 @@ namespace Microsoft.Extensions.Localization.Tests
         [Fact]
         public async void GetDefaultCultureInfoIfCookieDoesNotExist()
         {
-            using (var server = TestServer.Create(app =>
-            {
-                var options = new RequestLocalizationOptions()
+            var builder = new WebApplicationBuilder()
+                .Configure(app =>
                 {
-                    SupportedCultures = new List<CultureInfo>
+                    var options = new RequestLocalizationOptions
                     {
-                        new CultureInfo("ar-SA")
-                    },
-                    SupportedUICultures = new List<CultureInfo>
+                        DefaultRequestCulture = new RequestCulture("en-US"),
+                        SupportedCultures = new List<CultureInfo>
+                        {
+                            new CultureInfo("ar-SA")
+                        },
+                        SupportedUICultures = new List<CultureInfo>
+                        {
+                            new CultureInfo("ar-SA")
+                        }
+                    };
+                    var provider = new CookieRequestCultureProvider();
+                    provider.CookieName = "Preferences";
+                    options.RequestCultureProviders.Insert(0, provider);
+                    app.UseRequestLocalization(options);
+                    app.Run(context =>
                     {
-                        new CultureInfo("ar-SA")
-                    }
-                };
-                var provider = new CookieRequestCultureProvider();
-                provider.CookieName = "Preferences";
-                options.RequestCultureProviders.Insert(0, provider);
-                app.UseRequestLocalization(options, defaultRequestCulture: new RequestCulture("en-US"));
-                app.Run(context =>
-                {
-                    var requestCultureFeature = context.Features.Get<IRequestCultureFeature>();
-                    var requestCulture = requestCultureFeature.RequestCulture;
-                    Assert.Equal("en-US", requestCulture.Culture.Name);
-                    return Task.FromResult(0);
+                        var requestCultureFeature = context.Features.Get<IRequestCultureFeature>();
+                        var requestCulture = requestCultureFeature.RequestCulture;
+                        Assert.Equal("en-US", requestCulture.Culture.Name);
+                        return Task.FromResult(0);
+                    });
                 });
-            }))
+
+            using (var server = new TestServer(builder))
             {
                 var client = server.CreateClient();
                 var response = await client.GetAsync(string.Empty);

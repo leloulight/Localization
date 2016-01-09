@@ -29,8 +29,9 @@ namespace LocalizationWebsite
         {
             loggerFactory.AddConsole(minLevel: LogLevel.Warning);
 
-            var options = new RequestLocalizationOptions
+            app.UseRequestLocalization(new RequestLocalizationOptions
             {
+                DefaultRequestCulture = new RequestCulture("en-US"),
                 SupportedCultures = new List<CultureInfo>()
                 {
                     new CultureInfo("fr-FR")
@@ -39,9 +40,7 @@ namespace LocalizationWebsite
                 {
                     new CultureInfo("fr-FR")
                 }
-            };
-
-            app.UseRequestLocalization(options, defaultRequestCulture: new RequestCulture("en-US"));
+            });
 
             var stringLocalizer = stringLocalizerFactory.Create("Test", location: null);
 

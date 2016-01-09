@@ -1,9 +1,20 @@
+<<<<<<< HEAD
 {
   "webroot": "wwwroot",
+=======
+﻿{
+>>>>>>> refs/remotes/aspnet/dev
   "version": "1.0.0-*",
   "compilationOptions": {
+<<<<<<< HEAD
     "warningsAsErrors": true
   },
+=======
+    "warningsAsErrors": true,
+    "emitEntryPoint": true
+  },
+
+>>>>>>> refs/remotes/aspnet/dev
   "dependencies": {
     "Microsoft.AspNet.Localization": "1.0.0-rc1-final",
     "Microsoft.AspNet.Server.Kestrel": "1.0.0-rc1-final",
@@ -11,8 +22,7 @@
     "Microsoft.Extensions.Logging.Console": "1.0.0-rc1-final"
   },
   "commands": {
-    "web": "Microsoft.AspNet.Server.Kestrel",
-    "kestrel": "Microsoft.AspNet.Server.Kestrel"
+    "web": "LocalizationWebsite"
   },
   "frameworks": {
     "dnx451": {},

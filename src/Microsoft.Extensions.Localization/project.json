@@ -10,15 +10,23 @@
     "keyFile": "../../tools/Key.snk"
   },
   "dependencies": {
+<<<<<<< HEAD
     "Microsoft.Extensions.PlatformAbstractions": "1.0.0-rc1-final",
     "Microsoft.Extensions.DependencyInjection.Abstractions": "1.0.0-rc1-final",
     "Microsoft.Extensions.Localization.Abstractions": "1.0.0-rc1-final",
     "Microsoft.Extensions.OptionsModel": "1.0.0-rc1-final"
+=======
+    "Microsoft.Extensions.PlatformAbstractions": "1.0.0-*",
+    "Microsoft.Extensions.DependencyInjection.Abstractions": "1.0.0-*",
+    "Microsoft.Extensions.Localization.Abstractions": "1.0.0-*",
+    "Microsoft.Extensions.Options": "1.0.0-*"
+>>>>>>> refs/remotes/aspnet/dev
   },
   "frameworks": {
     "net451": {},
     "dotnet5.4": {
       "dependencies": {
+<<<<<<< HEAD
         "Microsoft.CSharp": "4.0.1-beta-23516",
         "System.Collections": "4.0.11-beta-23516",
         "System.Collections.Concurrent": "4.0.11-beta-23516",
@@ -27,6 +35,10 @@
         "System.Resources.ReaderWriter": "4.0.0-beta-23516",
         "System.Resources.ResourceManager": "4.0.1-beta-23516",
         "System.Threading": "4.0.11-beta-23516"
+=======
+        "System.Collections.Concurrent": "4.0.11-*",
+        "System.Resources.ReaderWriter": "4.0.0-*"
+>>>>>>> refs/remotes/aspnet/dev
       }
     }
   }

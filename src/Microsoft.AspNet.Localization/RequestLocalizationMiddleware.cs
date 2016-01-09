@@ -8,8 +8,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNet.Builder;
 using Microsoft.AspNet.Http;
-using Microsoft.AspNet.Http.Features;
 using Microsoft.Extensions.Globalization;
+using Microsoft.Extensions.Options;
 
 namespace Microsoft.AspNet.Localization
 {
@@ -19,9 +19,10 @@ namespace Microsoft.AspNet.Localization
     /// </summary>
     public class RequestLocalizationMiddleware
     {
+        private static readonly int MaxCultureFallbackDepth = 5;
+
         private readonly RequestDelegate _next;
         private readonly RequestLocalizationOptions _options;
-        private readonly RequestCulture _defaultRequestCulture;
 
         /// <summary>
         /// Creates a new <see cref="RequestLocalizationMiddleware"/>.
@@ -29,12 +30,7 @@ namespace Microsoft.AspNet.Localization
         /// <param name="next">The <see cref="RequestDelegate"/> representing the next middleware in the pipeline.</param>
         /// <param name="options">The <see cref="RequestLocalizationOptions"/> representing the options for the
         /// <see cref="RequestLocalizationMiddleware"/>.</param>
-        /// <param name="defaultRequestCulture">The default <see cref="RequestCulture"/> to use if none of the
-        /// requested cultures match supported cultures.</param>
-        public RequestLocalizationMiddleware(
-            RequestDelegate next,
-            RequestLocalizationOptions options,
-            RequestCulture defaultRequestCulture)
+        public RequestLocalizationMiddleware(RequestDelegate next, IOptions<RequestLocalizationOptions> options)
         {
             if (next == null)
             {
@@ -46,14 +42,8 @@ namespace Microsoft.AspNet.Localization
                 throw new ArgumentNullException(nameof(options));
             }
 
-            if (defaultRequestCulture == null)
-            {
-                throw new ArgumentNullException(nameof(defaultRequestCulture));
-            }
-
             _next = next;
-            _options = options;
-            _defaultRequestCulture = defaultRequestCulture;
+            _options = options.Value;
         }
 
         /// <summary>
@@ -68,7 +58,7 @@ namespace Microsoft.AspNet.Localization
                 throw new ArgumentNullException(nameof(context));
             }
 
-            var requestCulture = _defaultRequestCulture;
+            var requestCulture = _options.DefaultRequestCulture;
 
             IRequestCultureProvider winningProvider = null;
 
@@ -86,25 +76,33 @@ namespace Microsoft.AspNet.Localization
                         CultureInfo uiCultureInfo = null;
                         if (_options.SupportedCultures != null)
                         {
-                            cultureInfo = GetCultureInfo(cultures, _options.SupportedCultures);
+                            cultureInfo = GetCultureInfo(
+                                cultures,
+                                _options.SupportedCultures,
+                                _options.FallBackToParentCultures);
                         }
 
                         if (_options.SupportedUICultures != null)
                         {
-                            uiCultureInfo = GetCultureInfo(uiCultures, _options.SupportedUICultures);
+                            uiCultureInfo = GetCultureInfo(
+                                uiCultures,
+                                _options.SupportedUICultures,
+                                _options.FallBackToParentUICultures);
                         }
 
                         if (cultureInfo == null && uiCultureInfo == null)
                         {
                             continue;
                         }
+
                         if (cultureInfo == null && uiCultureInfo != null)
                         {
-                            cultureInfo = _defaultRequestCulture.Culture;
+                            cultureInfo = _options.DefaultRequestCulture.Culture;
                         }
+
                         if (cultureInfo != null && uiCultureInfo == null)
                         {
-                            uiCultureInfo = _defaultRequestCulture.UICulture;
+                            uiCultureInfo = _options.DefaultRequestCulture.UICulture;
                         }
 
                         var result = new RequestCulture(cultureInfo, uiCultureInfo);
@@ -137,15 +135,18 @@ namespace Microsoft.AspNet.Localization
 #endif
         }
 
-        private CultureInfo GetCultureInfo(IList<string> cultures, IList<CultureInfo> supportedCultures)
+        private static CultureInfo GetCultureInfo(
+            IList<string> cultureNames,
+            IList<CultureInfo> supportedCultures,
+            bool fallbackToParentCultures)
         {
-            foreach (var culture in cultures)
+            foreach (var cultureName in cultureNames)
             {
                 // Allow empty string values as they map to InvariantCulture, whereas null culture values will throw in
                 // the CultureInfo ctor
-                if (culture != null)
+                if (cultureName != null)
                 {
-                    var cultureInfo = CultureInfoCache.GetCultureInfo(culture, supportedCultures);
+                    var cultureInfo = GetCultureInfo(cultureName, supportedCultures, fallbackToParentCultures, currentDepth: 0);
                     if (cultureInfo != null)
                     {
                         return cultureInfo;
@@ -154,6 +155,30 @@ namespace Microsoft.AspNet.Localization
             }
 
             return null;
+        }
+
+        private static CultureInfo GetCultureInfo(
+            string cultureName,
+            IList<CultureInfo> supportedCultures,
+            bool fallbackToParentCultures,
+            int currentDepth)
+        {
+            var culture = CultureInfoCache.GetCultureInfo(cultureName, supportedCultures);
+
+            if (culture == null && fallbackToParentCultures && currentDepth < MaxCultureFallbackDepth)
+            {
+                var lastIndexOfHyphen = cultureName.LastIndexOf('-');
+
+                if (lastIndexOfHyphen > 0)
+                {
+                    // Trim the trailing section from the culture name, e.g. "fr-FR" becomes "fr"
+                    var parentCultureName = cultureName.Substring(0, lastIndexOfHyphen);
+
+                    culture = GetCultureInfo(parentCultureName, supportedCultures, fallbackToParentCultures, currentDepth + 1);
+                }
+            }
+
+            return culture;
         }
     }
 }
